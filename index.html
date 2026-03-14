@@ -1,0 +1,1225 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="theme-color" content="#1a0a4a"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<title>Taboo</title>
+<style>
+:root {
+  --bg: #1e0f5c;
+  --bg2: #2a1570;
+  --card-head: #e8304a;
+  --blue: #178fd4;
+  --purple: #5b3fcf;
+  --red: #e8304a;
+  --green: #27c465;
+  --amber: #f5a623;
+  --radius: 20px;
+  --radius-btn: 18px;
+  --muted: rgba(255,255,255,0.7);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; width: 100%; overflow: hidden; background: var(--bg); }
+body { font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif; color: #fff; }
+
+#app {
+  position: fixed; inset: 0;
+  max-width: 480px; margin: 0 auto;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+#app::before {
+  content: ""; position: absolute; inset: 0;
+  background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 36px 36px; pointer-events: none; z-index: 0;
+}
+
+.screen {
+  display: none; position: absolute; inset: 0;
+  flex-direction: column;
+  padding: 16px 16px max(16px, env(safe-area-inset-bottom, 16px));
+  overflow: hidden; z-index: 1;
+}
+.screen.active { display: flex; }
+
+/* ===== SETUP ===== */
+#screen-setup {
+  justify-content: center;
+  padding-top: max(24px, env(safe-area-inset-top, 24px));
+}
+
+.logo-wrap { text-align: center; margin-bottom: clamp(14px, 3.5vh, 24px); }
+.logo-icon {
+  width: clamp(50px, 12vw, 66px); height: clamp(50px, 12vw, 66px);
+  background: var(--purple); border-radius: 18px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(20px, 6vw, 28px); font-weight: 900;
+  margin: 0 auto 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+}
+.logo-title { font-size: clamp(22px, 6vw, 30px); font-weight: 900; letter-spacing: 1px; }
+.logo-sub { font-size: clamp(11px, 2.8vw, 13px); color: var(--muted); margin-top: 3px; }
+
+.setup-block { width: 100%; margin-bottom: clamp(10px, 2.5vh, 18px); }
+.setup-lbl {
+  font-size: clamp(10px, 2.5vw, 12px); color: var(--muted);
+  letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; padding-left: 2px;
+}
+
+/* Language select button */
+.lang-select-btn {
+  width: 100%;
+  padding: clamp(12px, 3vh, 16px) 16px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-btn);
+  background: rgba(255,255,255,0.08);
+  color: #fff; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: clamp(14px, 3.8vw, 17px); font-weight: 700;
+  -webkit-appearance: none; transition: all 0.2s;
+}
+.lang-select-btn:active { transform: scale(0.98); }
+.lang-select-btn.selected { border-color: var(--amber); background: rgba(245,166,35,0.15); }
+.lang-select-btn .lang-left { display: flex; align-items: center; gap: 10px; }
+.lang-flag { font-size: clamp(18px, 5vw, 22px); line-height: 1; }
+.lang-arrow { font-size: 14px; color: var(--muted); }
+
+.level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.level-btn {
+  padding: clamp(10px, 2.5vh, 14px) 8px;
+  border: 2px solid rgba(255,255,255,0.15);
+  border-radius: var(--radius-btn);
+  background: rgba(255,255,255,0.08);
+  cursor: pointer; text-align: center;
+  color: #fff; -webkit-appearance: none; transition: all 0.2s;
+}
+.level-btn:active { transform: scale(0.97); }
+.level-btn.selected { border-color: var(--blue); background: rgba(23,143,212,0.25); }
+.level-badge { font-size: clamp(15px, 4vw, 19px); font-weight: 900; display: block; }
+.level-desc { font-size: clamp(10px, 2.5vw, 12px); color: var(--muted); margin-top: 2px; display: block; }
+
+.time-row { display: flex; align-items: center; gap: 10px; }
+.time-lbl { font-size: clamp(11px, 2.8vw, 13px); color: var(--muted); white-space: nowrap; }
+.time-val { font-size: clamp(13px, 3vw, 15px); font-weight: 700; min-width: 38px; text-align: right; }
+input[type=range] { flex: 1; accent-color: var(--blue); height: 6px; cursor: pointer; }
+
+.start-btn {
+  width: 100%; padding: clamp(13px, 3.2vh, 17px);
+  background: linear-gradient(135deg,#27c465,#1aab54);
+  color: #fff; border: none; border-radius: var(--radius-btn);
+  font-size: clamp(15px, 4vw, 18px); font-weight: 900; cursor: pointer;
+  letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(39,196,101,0.4);
+  -webkit-appearance: none; transition: all 0.2s; margin-top: 4px;
+}
+.start-btn:active { transform: scale(0.97); }
+.start-btn:disabled { opacity: 0.4; cursor: default; box-shadow: none; }
+
+/* ===== LANGUAGE MODAL ===== */
+.lang-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  align-items: flex-end; justify-content: center;
+  z-index: 300;
+}
+.lang-overlay.show { display: flex; }
+.lang-sheet {
+  background: var(--bg2);
+  border-radius: 24px 24px 0 0;
+  width: 100%; max-width: 480px;
+  padding: 20px 16px max(20px, env(safe-area-inset-bottom, 20px));
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+.lang-sheet-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.lang-sheet-title { font-size: clamp(16px, 4.5vw, 19px); font-weight: 900; }
+.lang-close-btn {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: none; background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.8); font-size: 14px; font-weight: 900;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  -webkit-appearance: none;
+}
+.lang-list { display: flex; flex-direction: column; gap: 8px; }
+.lang-item {
+  width: 100%; padding: clamp(13px, 3.2vh, 16px) 16px;
+  border: 2px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-btn);
+  background: rgba(255,255,255,0.06);
+  color: #fff; cursor: pointer;
+  display: flex; align-items: center; gap: 12px;
+  font-size: clamp(14px, 4vw, 17px); font-weight: 700;
+  -webkit-appearance: none; transition: all 0.2s; text-align: left;
+}
+.lang-item:active { transform: scale(0.98); }
+.lang-item.selected { border-color: var(--amber); background: rgba(245,166,35,0.18); }
+.lang-item .li-flag { font-size: clamp(20px, 5.5vw, 24px); line-height: 1; }
+.lang-item .li-name { flex: 1; }
+.lang-item .li-check { font-size: 16px; color: var(--amber); display: none; }
+.lang-item.selected .li-check { display: block; }
+
+/* ===== GAME ===== */
+#screen-game {
+  padding-top: max(14px, env(safe-area-inset-top, 14px));
+  gap: 10px;
+}
+.game-header { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.exit-btn {
+  width: clamp(34px,8vw,42px); height: clamp(34px,8vw,42px);
+  border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: clamp(12px,3vw,15px); font-weight: 900;
+  color: rgba(255,255,255,0.8); flex-shrink: 0; -webkit-appearance: none;
+}
+.header-stats { flex: 1; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.stat-box {
+  flex: 1; background: rgba(255,255,255,0.1); border-radius: 12px;
+  padding: clamp(5px,1.5vh,9px) 8px; text-align: center;
+}
+.timer-box {
+  flex: 1; background: rgba(255,255,255,0.1); border-radius: 12px;
+  padding: clamp(5px,1.5vh,9px) 8px; text-align: center;
+  border: 2px solid rgba(255,255,255,0.25);
+}
+.timer-box.urgent { border-color: var(--red); background: rgba(232,48,74,0.2); }
+.timer-box.urgent .stat-num { color: #ff8a9a; }
+.stat-lbl { font-size: clamp(9px,2vw,11px); color: var(--muted); letter-spacing: 0.4px; text-transform: uppercase; }
+.stat-num { font-size: clamp(17px,4.5vw,22px); font-weight: 900; }
+
+.card {
+  flex: 1; border-radius: var(--radius); overflow: hidden;
+  box-shadow: 0 10px 32px rgba(0,0,0,0.5);
+  display: flex; flex-direction: column; min-height: 0;
+}
+.card-head {
+  background: var(--card-head); padding: clamp(12px,3vh,20px) 16px;
+  text-align: center; flex-shrink: 0;
+}
+.target-word {
+  font-size: clamp(24px,7vw,36px); font-weight: 900; color: #fff;
+  letter-spacing: 2px; text-transform: uppercase;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.card-body {
+  background: #fff; flex: 1;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: clamp(6px,1.5vh,12px) clamp(16px,4vw,24px); overflow: hidden;
+}
+.taboo-list { list-style: none; width: 100%; }
+.taboo-list li {
+  font-size: clamp(15px,4.5vw,21px); font-weight: 700; color: #1a1a1a;
+  padding: clamp(7px,1.8vh,11px) 0; border-bottom: 1.5px solid #eee; text-align: center;
+}
+.taboo-list li:last-child { border-bottom: none; }
+
+.action-wrap { flex-shrink: 0; }
+.action-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: clamp(8px,2vw,12px); margin-bottom: 6px;
+}
+.act-btn {
+  padding: clamp(12px,3vh,17px) 4px; border: none; border-radius: var(--radius-btn);
+  cursor: pointer; font-size: clamp(20px,6vw,28px); font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 5px 14px rgba(0,0,0,0.3);
+  -webkit-appearance: none; transition: all 0.15s; line-height: 1;
+}
+.act-btn:active { transform: scale(0.93); }
+.act-btn:disabled { opacity: 0.3; cursor: default; transform: none; }
+.act-btn.taboo   { background: linear-gradient(135deg,#e8304a,#c42038); color:#fff; }
+.act-btn.pass    { background: linear-gradient(135deg,#178fd4,#0e6fa8); color:#fff; }
+.act-btn.correct { background: linear-gradient(135deg,#27c465,#1aab54); color:#fff; }
+
+.action-labels { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: clamp(8px,2vw,12px); }
+.act-lbl { text-align: center; font-size: clamp(10px,2.5vw,12px); color: var(--muted); font-weight: 600; }
+.pass-info { text-align: center; font-size: clamp(10px,2.5vw,12px); color: var(--muted); margin-top: 6px; }
+
+/* ===== PAUSE ===== */
+.pause-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.65);
+  align-items: center; justify-content: center; z-index: 200;
+}
+.pause-overlay.show { display: flex; }
+.pause-box {
+  background: var(--bg2); border-radius: var(--radius);
+  padding: clamp(22px,5vw,30px) clamp(18px,4vw,26px);
+  width: min(300px,88vw); text-align: center;
+  border: 1px solid rgba(255,255,255,0.15);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+.pause-title { font-size: clamp(16px,4.5vw,20px); font-weight: 900; margin-bottom: 6px; }
+.pause-sub   { font-size: clamp(12px,3vw,14px); color: var(--muted); margin-bottom: 18px; }
+.pause-btn {
+  width: 100%; padding: clamp(12px,3vw,15px);
+  border-radius: var(--radius-btn);
+  font-size: clamp(13px,3.8vw,16px); font-weight: 900;
+  cursor: pointer; margin-bottom: 10px; border: none;
+  -webkit-appearance: none; transition: all 0.15s;
+}
+.pause-btn:last-child { margin-bottom: 0; }
+.pause-btn:active { transform: scale(0.97); }
+.pause-btn.continue { background: linear-gradient(135deg,#27c465,#1aab54); color:#fff; box-shadow:0 4px 14px rgba(39,196,101,0.4); }
+.pause-btn.quit     { background: linear-gradient(135deg,#e8304a,#c42038); color:#fff; box-shadow:0 4px 14px rgba(232,48,74,0.4); }
+
+/* ===== RESULT ===== */
+#screen-result {
+  justify-content: center;
+  padding-top: max(24px, env(safe-area-inset-top, 24px));
+  gap: 12px;
+}
+.result-score-wrap {
+  background: rgba(255,255,255,0.1); border-radius: var(--radius);
+  padding: clamp(18px,4vh,28px); text-align: center;
+  border: 1px solid rgba(255,255,255,0.15);
+}
+.result-score { font-size: clamp(56px,16vw,84px); font-weight: 900; line-height: 1; }
+.result-lbl { font-size: clamp(12px,3vw,14px); color: var(--muted); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
+.result-stats { display: flex; gap: 10px; margin-top: 16px; }
+.rstat { flex: 1; background: rgba(255,255,255,0.08); border-radius: 12px; padding: clamp(10px,2.5vh,14px) 8px; text-align: center; }
+.rstat-n { font-size: clamp(20px,5.5vw,26px); font-weight: 900; }
+.rstat-l { font-size: clamp(10px,2.3vw,12px); color: var(--muted); margin-top: 2px; }
+.rstat.green .rstat-n { color: #27c465; }
+.rstat.amber .rstat-n { color: var(--amber); }
+.rstat.red   .rstat-n { color: #ff8a9a; }
+
+.play-again {
+  width: 100%; padding: clamp(13px,3.2vh,17px);
+  background: linear-gradient(135deg,#178fd4,#0e6fa8);
+  color: #fff; border: none; border-radius: var(--radius-btn);
+  font-size: clamp(15px,4vw,18px); font-weight: 900; cursor: pointer;
+  letter-spacing: 0.5px; box-shadow: 0 6px 20px rgba(23,143,212,0.4);
+  -webkit-appearance: none; transition: all 0.2s;
+}
+.play-again:active { transform: scale(0.97); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SETUP -->
+  <div class="screen active" id="screen-setup">
+    <div class="logo-wrap">
+      <div class="logo-icon">T</div>
+      <div class="logo-title">TABOO</div>
+      <div class="logo-sub">Kelime tahmin oyunu</div>
+      <div class="logo-sub">created by Muhammed Talay for Nevada class</div>
+    </div>
+
+    <!-- LANGUAGE BLOCK -->
+    <div class="setup-block">
+      <div class="setup-lbl">Dil sec</div>
+      <button class="lang-select-btn" id="lang-select-btn" onclick="openLangModal()">
+        <div class="lang-left">
+          <span class="lang-flag" id="lang-flag">&#127760;</span>
+          <span id="lang-name">Dil secin...</span>
+        </div>
+        <span class="lang-arrow">&#9660;</span>
+      </button>
+    </div>
+
+    <!-- LEVEL BLOCK -->
+    <div class="setup-block">
+      <div class="setup-lbl">Seviye sec</div>
+      <div class="level-grid">
+        <button class="level-btn" data-level="A1" onclick="selectLevel('A1')"><span class="level-badge">A1</span><span class="level-desc">Baslangic</span></button>
+        <button class="level-btn" data-level="A2" onclick="selectLevel('A2')"><span class="level-badge">A2</span><span class="level-desc">Temel</span></button>
+        <button class="level-btn" data-level="B1" onclick="selectLevel('B1')"><span class="level-badge">B1</span><span class="level-desc">Orta</span></button>
+        <button class="level-btn" data-level="B2" onclick="selectLevel('B2')"><span class="level-badge">B2</span><span class="level-desc">Orta-ustu</span></button>
+      </div>
+    </div>
+
+    <!-- TIME BLOCK -->
+    <div class="setup-block">
+      <div class="setup-lbl">Sure</div>
+      <div class="time-row">
+        <span class="time-lbl">30s</span>
+        <input type="range" min="1" max="5" value="3" step="1" id="time-slider" oninput="updateTime(this.value)"/>
+        <span class="time-lbl">150s</span>
+        <span class="time-val" id="time-display">90s</span>
+      </div>
+    </div>
+
+    <button class="start-btn" id="start-btn" onclick="startGame()" disabled>OYUNU BASLAT</button>
+  </div>
+
+  <!-- LANGUAGE MODAL -->
+  <div class="lang-overlay" id="lang-overlay" onclick="closeLangModalOutside(event)">
+    <div class="lang-sheet">
+      <div class="lang-sheet-header">
+        <span class="lang-sheet-title">Dil sec</span>
+        <button class="lang-close-btn" onclick="closeLangModal()">X</button>
+      </div>
+      <div class="lang-list">
+        <button class="lang-item" data-lang="TR" onclick="selectLang('TR')">
+          <span class="li-flag">&#127481;&#127479;</span>
+          <span class="li-name">Turkce</span>
+          <span class="li-check">&#10003;</span>
+        </button>
+        <button class="lang-item" data-lang="EN" onclick="selectLang('EN')">
+          <span class="li-flag">&#127468;&#127463;</span>
+          <span class="li-name">Ingilizce</span>
+          <span class="li-check">&#10003;</span>
+        </button>
+        <button class="lang-item" data-lang="ES" onclick="selectLang('ES')">
+          <span class="li-flag">&#127466;&#127480;</span>
+          <span class="li-name">Ispanyolca</span>
+          <span class="li-check">&#10003;</span>
+        </button>
+        <button class="lang-item" data-lang="FA" onclick="selectLang('FA')">
+          <span class="li-flag">&#127470;&#127479;</span>
+          <span class="li-name">Farsa</span>
+          <span class="li-check">&#10003;</span>
+        </button>
+        <button class="lang-item" data-lang="KU" onclick="selectLang('KU')">
+          <span class="li-flag">&#127988;</span>
+          <span class="li-name">Kurtce</span>
+          <span class="li-check">&#10003;</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- GAME -->
+  <div class="screen" id="screen-game">
+    <div class="pause-overlay" id="pause-overlay">
+      <div class="pause-box">
+        <div class="pause-title">Oyun Durduruldu</div>
+        <div class="pause-sub">Ne yapmak istiyorsun?</div>
+        <button class="pause-btn continue" onclick="resumeGame()">DEVAM ET</button>
+        <button class="pause-btn quit" onclick="quitGame()">OYUNU BITIR</button>
+      </div>
+    </div>
+    <div class="game-header">
+      <button class="exit-btn" onclick="pauseGame()">X</button>
+      <div class="header-stats">
+        <div class="stat-box"><div class="stat-lbl">Puan</div><div class="stat-num" id="score-display">0</div></div>
+        <div class="timer-box" id="timer-box"><div class="stat-lbl">Sure</div><div class="stat-num" id="timer-display">90</div></div>
+        <div class="stat-box"><div class="stat-lbl">Pas</div><div class="stat-num" id="pass-display">3</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><p class="target-word" id="card-word"></p></div>
+      <div class="card-body"><ul class="taboo-list" id="card-taboo"></ul></div>
+    </div>
+    <div class="action-wrap">
+      <div class="action-row">
+        <button class="act-btn taboo"   id="btn-taboo"   onclick="markTaboo()">X</button>
+        <button class="act-btn pass"    id="btn-pass"    onclick="markPass()">&#8594;</button>
+        <button class="act-btn correct" id="btn-correct" onclick="markCorrect()">&#10003;</button>
+      </div>
+      <div class="action-labels">
+        <div class="act-lbl">Taboo (-1)</div>
+        <div class="act-lbl">Pas</div>
+        <div class="act-lbl">Dogru (+1)</div>
+      </div>
+      <div class="pass-info" id="pass-info">3 pas hakkin var</div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="screen" id="screen-result">
+    <div class="result-score-wrap">
+      <div class="result-score" id="final-score">0</div>
+      <div class="result-lbl">toplam puan</div>
+      <div class="result-stats">
+        <div class="rstat green"><div class="rstat-n" id="stat-correct">0</div><div class="rstat-l">dogru</div></div>
+        <div class="rstat amber"><div class="rstat-n" id="stat-pass">0</div><div class="rstat-l">pas</div></div>
+        <div class="rstat red"><div class="rstat-n" id="stat-taboo">0</div><div class="rstat-l">taboo</div></div>
+      </div>
+    </div>
+    <button class="play-again" onclick="resetGame()">TEKRAR OYNA</button>
+  </div>
+
+</div>
+<script>
+/* ========== WORD DATA ========== */
+var WORDS = {
+  EN: {
+    A1:[
+      {word:"CAT",taboo:["animal","pet","meow","fur"]},
+      {word:"DOG",taboo:["pet","bark","animal","bone"]},
+      {word:"WATER",taboo:["drink","liquid","wet","river"]},
+      {word:"HOUSE",taboo:["home","live","building","door"]},
+      {word:"BOOK",taboo:["read","page","story","library"]},
+      {word:"APPLE",taboo:["fruit","red","eat","tree"]},
+      {word:"SUN",taboo:["light","hot","sky","yellow"]},
+      {word:"CAR",taboo:["drive","road","vehicle","wheel"]},
+      {word:"HAPPY",taboo:["smile","feeling","good","joy"]},
+      {word:"BIG",taboo:["large","size","huge","giant"]},
+      {word:"BABY",taboo:["small","child","cry","born"]},
+      {word:"MILK",taboo:["drink","white","cow","glass"]},
+      {word:"TREE",taboo:["green","plant","wood","leaf"]},
+      {word:"EYE",taboo:["see","face","look","sight"]},
+      {word:"HAND",taboo:["finger","touch","arm","five"]},
+      {word:"CHAIR",taboo:["sit","furniture","table","legs"]},
+      {word:"FISH",taboo:["sea","swim","water","food"]},
+      {word:"COLD",taboo:["hot","temperature","winter","ice"]},
+      {word:"BALL",taboo:["round","play","sport","throw"]},
+      {word:"SCHOOL",taboo:["learn","class","teacher","student"]},
+      {word:"BED",taboo:["sleep","room","pillow","night"]},
+      {word:"BREAD",taboo:["eat","food","wheat","toast"]},
+      {word:"DOOR",taboo:["open","close","room","house"]},
+      {word:"BIRD",taboo:["fly","wing","sky","animal"]},
+      {word:"SHOE",taboo:["foot","wear","sock","walk"]},
+      {word:"RAIN",taboo:["wet","sky","cloud","water"]},
+      {word:"NOSE",taboo:["smell","face","breathe","sneeze"]},
+      {word:"EGG",taboo:["chicken","breakfast","white","cook"]},
+      {word:"FIRE",taboo:["hot","burn","flame","smoke"]},
+      {word:"SNOW",taboo:["cold","white","winter","fall"]}
+    ],
+    A2:[
+      {word:"KITCHEN",taboo:["cook","food","room","oven"]},
+      {word:"BIRTHDAY",taboo:["cake","party","age","celebrate"]},
+      {word:"HOSPITAL",taboo:["doctor","sick","building","nurse"]},
+      {word:"SHOPPING",taboo:["buy","store","money","mall"]},
+      {word:"HUNGRY",taboo:["eat","food","stomach","empty"]},
+      {word:"TICKET",taboo:["train","cinema","travel","pay"]},
+      {word:"WEATHER",taboo:["rain","sun","hot","cold"]},
+      {word:"BREAKFAST",taboo:["morning","eat","food","coffee"]},
+      {word:"TELEPHONE",taboo:["call","talk","mobile","ring"]},
+      {word:"UMBRELLA",taboo:["rain","wet","carry","open"]},
+      {word:"HOLIDAY",taboo:["travel","rest","vacation","beach"]},
+      {word:"LIBRARY",taboo:["book","read","quiet","borrow"]},
+      {word:"AIRPORT",taboo:["plane","fly","travel","ticket"]},
+      {word:"JACKET",taboo:["wear","coat","warm","clothes"]},
+      {word:"MARKET",taboo:["buy","sell","food","shop"]},
+      {word:"POLICE",taboo:["law","arrest","crime","uniform"]},
+      {word:"EXERCISE",taboo:["sport","gym","run","body"]},
+      {word:"RESTAURANT",taboo:["eat","food","menu","waiter"]},
+      {word:"MIRROR",taboo:["reflection","glass","look","face"]},
+      {word:"CALENDAR",taboo:["date","month","year","schedule"]},
+      {word:"MOUNTAIN",taboo:["high","climb","snow","nature"]},
+      {word:"SWIMMING",taboo:["water","pool","sport","float"]},
+      {word:"DICTIONARY",taboo:["word","meaning","language","book"]},
+      {word:"CASTLE",taboo:["king","old","stone","tower"]},
+      {word:"CANDLE",taboo:["light","fire","wax","burn"]},
+      {word:"BRIDGE",taboo:["river","cross","road","water"]},
+      {word:"GARDEN",taboo:["plant","flower","outdoor","grow"]},
+      {word:"TRAFFIC",taboo:["road","car","jam","city"]},
+      {word:"CAMERA",taboo:["photo","picture","shoot","lens"]},
+      {word:"ENVELOPE",taboo:["letter","mail","send","paper"]}
+    ],
+    B1:[
+      {word:"ENVIRONMENT",taboo:["nature","pollution","green","earth"]},
+      {word:"TRADITION",taboo:["culture","custom","old","family"]},
+      {word:"VOLUNTEER",taboo:["help","free","work","charity"]},
+      {word:"COMPETITION",taboo:["win","lose","sport","contest"]},
+      {word:"OPINION",taboo:["think","view","believe","idea"]},
+      {word:"EDUCATION",taboo:["school","learn","study","knowledge"]},
+      {word:"DEMOCRACY",taboo:["vote","government","election","people"]},
+      {word:"IMAGINATION",taboo:["creative","think","dream","mind"]},
+      {word:"ACHIEVEMENT",taboo:["success","goal","accomplish","proud"]},
+      {word:"RESEARCH",taboo:["study","find","science","information"]},
+      {word:"RESPONSIBLE",taboo:["duty","blame","mature","task"]},
+      {word:"ADVERTISEMENT",taboo:["buy","sell","commercial","product"]},
+      {word:"CONFIDENCE",taboo:["trust","believe","strong","self"]},
+      {word:"ARGUMENT",taboo:["fight","disagree","talk","reason"]},
+      {word:"RECOMMEND",taboo:["suggest","good","advice","tell"]},
+      {word:"PREDICT",taboo:["future","guess","forecast","expect"]},
+      {word:"INFLUENCE",taboo:["affect","power","change","impact"]},
+      {word:"NEGOTIATE",taboo:["talk","agree","deal","discuss"]},
+      {word:"EXHAUSTED",taboo:["tired","sleep","energy","weak"]},
+      {word:"EVIDENCE",taboo:["proof","show","fact","crime"]},
+      {word:"BUDGET",taboo:["money","spend","plan","cost"]},
+      {word:"PRESSURE",taboo:["stress","push","force","weight"]},
+      {word:"FLEXIBLE",taboo:["change","bend","adapt","soft"]},
+      {word:"PERMISSION",taboo:["allow","ask","yes","right"]},
+      {word:"GENERATION",taboo:["age","young","old","family"]},
+      {word:"ADVENTURE",taboo:["travel","exciting","dangerous","explore"]},
+      {word:"POLLUTION",taboo:["dirty","air","environment","toxic"]},
+      {word:"NEIGHBORHOOD",taboo:["area","live","community","street"]},
+      {word:"DISAPPOINTED",taboo:["sad","expect","fail","upset"]},
+      {word:"UNEMPLOYMENT",taboo:["job","work","money","fired"]}
+    ],
+    B2:[
+      {word:"PHENOMENON",taboo:["event","strange","occur","observe"]},
+      {word:"CONSEQUENCE",taboo:["result","effect","happen","cause"]},
+      {word:"AMBIGUOUS",taboo:["unclear","meaning","two","interpret"]},
+      {word:"SKEPTICAL",taboo:["doubt","believe","trust","question"]},
+      {word:"INNOVATIVE",taboo:["new","creative","idea","technology"]},
+      {word:"DETERIORATE",taboo:["worse","decline","bad","quality"]},
+      {word:"PERSISTENT",taboo:["keep","continue","stop","stubborn"]},
+      {word:"HIERARCHY",taboo:["rank","level","boss","power"]},
+      {word:"STEREOTYPE",taboo:["judge","group","think","assume"]},
+      {word:"COMPROMISE",taboo:["agree","middle","both","give"]},
+      {word:"MOMENTUM",taboo:["speed","force","move","build"]},
+      {word:"VERSATILE",taboo:["many","use","flexible","skill"]},
+      {word:"RHETORIC",taboo:["speech","language","persuade","politics"]},
+      {word:"IMPLICATION",taboo:["mean","suggest","result","hidden"]},
+      {word:"RESILIENCE",taboo:["strong","recover","difficult","bounce"]},
+      {word:"PARADOX",taboo:["opposite","true","false","strange"]},
+      {word:"PREJUDICE",taboo:["judge","unfair","group","before"]},
+      {word:"SUSTAINABLE",taboo:["environment","long","green","future"]},
+      {word:"PRAGMATIC",taboo:["practical","real","work","idea"]},
+      {word:"CONTROVERSIAL",taboo:["debate","disagree","topic","opinion"]},
+      {word:"COLLABORATE",taboo:["work","together","team","join"]},
+      {word:"FRAGILE",taboo:["break","careful","weak","glass"]},
+      {word:"INITIATIVE",taboo:["start","idea","first","action"]},
+      {word:"DILEMMA",taboo:["choose","problem","two","difficult"]},
+      {word:"REVENUE",taboo:["money","earn","business","income"]},
+      {word:"PERCEPTION",taboo:["see","think","understand","view"]},
+      {word:"BUREAUCRACY",taboo:["government","rules","paper","slow"]},
+      {word:"EPIDEMIC",taboo:["disease","spread","sick","many"]},
+      {word:"EXPLOIT",taboo:["use","unfair","advantage","take"]},
+      {word:"TRANSPARENT",taboo:["clear","see","honest","glass"]}
+    ]
+  },
+  TR: {
+    A1:[
+      {word:"KEDI",taboo:["hayvan","miyav","tuy","evcil"]},
+      {word:"KOPEK",taboo:["hayvan","hav","kemik","evcil"]},
+      {word:"SU",taboo:["ic","sivi","islak","nehir"]},
+      {word:"EV",taboo:["yasam","bina","kapi","oda"]},
+      {word:"KITAP",taboo:["oku","sayfa","hikaye","kutuphane"]},
+      {word:"ELMA",taboo:["meyve","kirmizi","ye","agac"]},
+      {word:"GUNES",taboo:["isik","sicak","gok","sari"]},
+      {word:"ARABA",taboo:["sur","yol","tekerlek","motor"]},
+      {word:"MUTLU",taboo:["gul","iyi","sevinc","duygu"]},
+      {word:"BUYUK",taboo:["kucuk","boyut","dev","genis"]},
+      {word:"BEBEK",taboo:["kucuk","cocuk","agla","dogum"]},
+      {word:"SUT",taboo:["ic","beyaz","inek","bardak"]},
+      {word:"AGAC",taboo:["yesil","bitki","odun","yaprak"]},
+      {word:"GOZ",taboo:["gor","yuz","bak","gorme"]},
+      {word:"EL",taboo:["parmak","dokun","kol","bes"]},
+      {word:"SANDALYE",taboo:["otur","masa","mobilya","ayak"]},
+      {word:"BALIK",taboo:["deniz","yuz","su","yemek"]},
+      {word:"SOGUK",taboo:["sicak","kis","buz","hava"]},
+      {word:"TOP",taboo:["yuvarlak","oyna","spor","at"]},
+      {word:"OKUL",taboo:["ders","sinif","ogretmen","ogren"]},
+      {word:"YATAK",taboo:["uyu","oda","yastik","gece"]},
+      {word:"EKMEK",taboo:["ye","buday","toast","hamur"]},
+      {word:"KAPI",taboo:["ac","kapat","oda","giris"]},
+      {word:"KUS",taboo:["uc","kanat","gok","hayvan"]},
+      {word:"AYAKKABI",taboo:["ayak","giy","corap","yuru"]},
+      {word:"YAGMUR",taboo:["islak","bulut","su","gok"]},
+      {word:"BURUN",taboo:["kokla","yuz","nefes","hapsi"]},
+      {word:"YUMURTA",taboo:["tavuk","kahvalti","beyaz","pisir"]},
+      {word:"ATES",taboo:["sicak","yan","alev","duman"]},
+      {word:"KAR",taboo:["soguk","beyaz","kis","dus"]}
+    ],
+    A2:[
+      {word:"MUTFAK",taboo:["pisir","yemek","oda","ocak"]},
+      {word:"DOGUM GUNU",taboo:["pasta","parti","yas","kutla"]},
+      {word:"HASTANE",taboo:["doktor","hasta","bina","hemsire"]},
+      {word:"ALISVERIS",taboo:["al","magaza","para","market"]},
+      {word:"AC",taboo:["ye","yemek","mide","bos"]},
+      {word:"BILET",taboo:["tren","sinema","yolculuk","ode"]},
+      {word:"HAVA",taboo:["yagmur","gunes","sicak","soguk"]},
+      {word:"KAHVALTI",taboo:["sabah","ye","yumurta","kahve"]},
+      {word:"TELEFON",taboo:["ara","konus","mobil","calar"]},
+      {word:"SEMSIYE",taboo:["yagmur","islak","ac","tas"]},
+      {word:"TATIL",taboo:["gez","dinlen","plaj","seyahat"]},
+      {word:"KUTUPHANE",taboo:["kitap","oku","sessiz","odunc"]},
+      {word:"HAVAALANI",taboo:["ucak","uc","bilet","seyahat"]},
+      {word:"CEKET",taboo:["giy","kaban","sicak","giysi"]},
+      {word:"MARKET",taboo:["al","sat","yemek","dukkan"]},
+      {word:"POLIS",taboo:["kanun","tutuklama","suc","unifroma"]},
+      {word:"EGZERSIZ",taboo:["spor","kosu","vucut","jimnastik"]},
+      {word:"RESTORAN",taboo:["ye","yemek","menu","garson"]},
+      {word:"AYNA",taboo:["yansima","cam","bak","yuz"]},
+      {word:"TAKVIM",taboo:["tarih","ay","yil","plan"]},
+      {word:"DAG",taboo:["yukse","tirman","kar","doga"]},
+      {word:"YOL",taboo:["araba","trafik","gid","asfalit"]},
+      {word:"SOZLUK",taboo:["kelime","anlam","dil","kitap"]},
+      {word:"KOPRU",taboo:["nehir","gec","yol","su"]},
+      {word:"BAHCE",taboo:["bitki","cicek","dis","toprak"]},
+      {word:"TRAFIK",taboo:["yol","araba","sikisma","sehir"]},
+      {word:"FOTOGRAF",taboo:["cek","resim","makine","lens"]},
+      {word:"ZARF",taboo:["mektup","posta","gonder","kagit"]},
+      {word:"MERDIVEN",taboo:["yukari","cik","kat","bina"]},
+      {word:"PENCERE",taboo:["cam","bak","dis","ac"]}
+    ],
+    B1:[
+      {word:"CEVRE",taboo:["doga","kirlilik","yesil","dunya"]},
+      {word:"GELENEK",taboo:["kultur","eski","aile","adet"]},
+      {word:"GONULLU",taboo:["yardim","ucretsiz","calisma","hayir"]},
+      {word:"YARISMAN",taboo:["kazan","kaybet","spor","mucadele"]},
+      {word:"KIRLILIK",taboo:["hava","cevere","zehir","pislik"]},
+      {word:"FIKIR",taboo:["dusun","gorus","inan","akil"]},
+      {word:"EGITIM",taboo:["okul","ders","bil","ogretmen"]},
+      {word:"DEMOKRASI",taboo:["oy","hukumet","secim","halk"]},
+      {word:"HAYAL GUCU",taboo:["yarat","dusun","ruya","zihne"]},
+      {word:"MACERA",taboo:["gez","heyecan","tehlike","kesif"]},
+      {word:"BASKI",taboo:["stress","itme","kuvvet","agirlik"]},
+      {word:"BASARI",taboo:["kazan","hedef","gururlan","tamamla"]},
+      {word:"HAYAL KIRIKLIGI",taboo:["uzgun","bekle","basarisiz","uzan"]},
+      {word:"NESIL",taboo:["yas","genc","yasli","aile"]},
+      {word:"ARASTIRMA",taboo:["cal","bul","bilim","bilgi"]},
+      {word:"SORUMLULUK",taboo:["gorev","suc","olgun","is"]},
+      {word:"REKLAM",taboo:["al","sat","urun","ticari"]},
+      {word:"ISSIZLIK",taboo:["is","calisma","para","kovulma"]},
+      {word:"GUVEN",taboo:["inan","guclu","kendine","saygı"]},
+      {word:"TARTISMA",taboo:["kavga","anlasmazlik","konusum","neden"]},
+      {word:"BUTCE",taboo:["para","harca","plan","maliyet"]},
+      {word:"TAVSIYE",taboo:["one","iyi","onerme","soyle"]},
+      {word:"ESNEK",taboo:["degis","buk","uyum","yumusak"]},
+      {word:"TAHMIN",taboo:["gelecek","sanmak","bekle","ongor"]},
+      {word:"ETKI",taboo:["degis","guc","sonuc","etkileme"]},
+      {word:"MUZAKERE",taboo:["konusum","anlasm","anlasma","tart"]},
+      {word:"YORGUN",taboo:["uyu","enerji","bitkin","zayif"]},
+      {word:"IZIN",taboo:["ver","sor","evet","hak"]},
+      {word:"KANIT",taboo:["ispat","goster","gercek","suc"]},
+      {word:"MAHALLE",taboo:["bolge","yasam","topluluk","sokak"]}
+    ],
+    B2:[
+      {word:"FENOMEN",taboo:["olay","garip","meydana","gozlemle"]},
+      {word:"SONUC",taboo:["etki","ol","neden","cik"]},
+      {word:"BELIRSIZ",taboo:["anlamsiz","iki","yorum","net"]},
+      {word:"SUPHECILI",taboo:["kus","inan","guven","sorgula"]},
+      {word:"YENILIKCI",taboo:["yeni","yaratici","fikir","teknoloji"]},
+      {word:"BOZULMA",taboo:["daha kotu","dusus","kalite","bozul"]},
+      {word:"ISRARCI",taboo:["devam","dur","inat","surekli"]},
+      {word:"HIYERARSI",taboo:["sirala","seviye","patron","guc"]},
+      {word:"KALIP YARGI",taboo:["yargi","grup","dusun","varsay"]},
+      {word:"UZLASMA",taboo:["anlasm","orta","ikisi","ver"]},
+      {word:"BUROKRASI",taboo:["hukumet","kural","yavaslama","kagit"]},
+      {word:"IVME",taboo:["hiz","kuvvet","hareket","artis"]},
+      {word:"COKLU KULLANIM",taboo:["cok","kullan","esnek","yetenek"]},
+      {word:"SALGIN",taboo:["hastalık","yayil","hasta","cok"]},
+      {word:"RETORIK",taboo:["konusm","dil","ikna","siyaset"]},
+      {word:"CIKARIM",taboo:["anla","one sur","sonuc","gizli"]},
+      {word:"DAYANIKLILIK",taboo:["guclu","toparla","zor","sicriy"]},
+      {word:"PARADOKS",taboo:["zit","dogru","yanlis","garip"]},
+      {word:"ON YARGI",taboo:["yargı","haksiz","grup","once"]},
+      {word:"SURDURULEBILIR",taboo:["cevre","uzun","yesil","gelecek"]},
+      {word:"PRAGMATIK",taboo:["pratik","gercek","is","fikir"]},
+      {word:"SEFFAF",taboo:["net","gor","donust","cam"]},
+      {word:"TARTISMALI",taboo:["tartism","anlasmazlik","konu","gorus"]},
+      {word:"SOMURME",taboo:["kullan","haksiz","avantaj","al"]},
+      {word:"ISBIRLIGI",taboo:["cal","birlikte","takim","katil"]},
+      {word:"KIRILGAN",taboo:["kir","dikkat","zayif","cam"]},
+      {word:"GIRISIM",taboo:["baslat","fikir","ilk","eylem"]},
+      {word:"IKILEM",taboo:["sec","sorun","iki","zor"]},
+      {word:"GELIR",taboo:["para","kazan","is","gelir"]},
+      {word:"ALGI",taboo:["gor","dusun","anla","bak"]}
+    ]
+  },
+  ES: {
+    A1:[
+      {word:"GATO",taboo:["animal","miau","pelo","mascota"]},
+      {word:"PERRO",taboo:["mascota","ladrar","hueso","animal"]},
+      {word:"AGUA",taboo:["beber","liquido","mojado","rio"]},
+      {word:"CASA",taboo:["hogar","vivir","edificio","puerta"]},
+      {word:"LIBRO",taboo:["leer","pagina","historia","biblioteca"]},
+      {word:"MANZANA",taboo:["fruta","roja","comer","arbol"]},
+      {word:"SOL",taboo:["luz","calor","cielo","amarillo"]},
+      {word:"COCHE",taboo:["conducir","carretera","rueda","motor"]},
+      {word:"FELIZ",taboo:["sonrisa","bueno","alegria","sentir"]},
+      {word:"GRANDE",taboo:["pequeno","tamano","enorme","gigante"]},
+      {word:"BEBE",taboo:["pequeno","nino","llorar","nacer"]},
+      {word:"LECHE",taboo:["beber","blanca","vaca","vaso"]},
+      {word:"ARBOL",taboo:["verde","planta","madera","hoja"]},
+      {word:"OJO",taboo:["ver","cara","mirar","vista"]},
+      {word:"MANO",taboo:["dedo","tocar","brazo","cinco"]},
+      {word:"SILLA",taboo:["sentarse","mesa","mueble","pata"]},
+      {word:"PEZ",taboo:["mar","nadar","agua","comida"]},
+      {word:"FRIO",taboo:["calor","temperatura","invierno","hielo"]},
+      {word:"PELOTA",taboo:["redonda","jugar","deporte","lanzar"]},
+      {word:"ESCUELA",taboo:["aprender","clase","profesor","alumno"]},
+      {word:"CAMA",taboo:["dormir","habitacion","almohada","noche"]},
+      {word:"PAN",taboo:["comer","trigo","tostada","panaderia"]},
+      {word:"PUERTA",taboo:["abrir","cerrar","habitacion","entrada"]},
+      {word:"PAJARO",taboo:["volar","ala","cielo","animal"]},
+      {word:"ZAPATO",taboo:["pie","calzar","calcetine","caminar"]},
+      {word:"LLUVIA",taboo:["mojado","nube","agua","cielo"]},
+      {word:"NARIZ",taboo:["oler","cara","respirar","estornudar"]},
+      {word:"HUEVO",taboo:["gallina","desayuno","blanco","cocinar"]},
+      {word:"FUEGO",taboo:["calor","quemar","llama","humo"]},
+      {word:"NIEVE",taboo:["frio","blanca","invierno","caer"]}
+    ],
+    A2:[
+      {word:"COCINA",taboo:["cocinar","comida","habitacion","horno"]},
+      {word:"CUMPLEANOS",taboo:["pastel","fiesta","edad","celebrar"]},
+      {word:"HOSPITAL",taboo:["medico","enfermo","enfermera","edificio"]},
+      {word:"COMPRAS",taboo:["comprar","tienda","dinero","centro"]},
+      {word:"HAMBRE",taboo:["comer","comida","estomago","vacio"]},
+      {word:"ENTRADA",taboo:["tren","cine","viaje","pagar"]},
+      {word:"TIEMPO",taboo:["lluvia","sol","calor","frio"]},
+      {word:"DESAYUNO",taboo:["manana","comer","huevo","cafe"]},
+      {word:"TELEFONO",taboo:["llamar","hablar","movil","sonar"]},
+      {word:"PARAGUAS",taboo:["lluvia","mojado","llevar","abrir"]},
+      {word:"VACACIONES",taboo:["viajar","descansar","playa","verano"]},
+      {word:"BIBLIOTECA",taboo:["libro","leer","silencio","prestar"]},
+      {word:"AEROPUERTO",taboo:["avion","volar","viaje","billete"]},
+      {word:"CHAQUETA",taboo:["ropa","abrigo","calor","ponerse"]},
+      {word:"MERCADO",taboo:["comprar","vender","comida","tienda"]},
+      {word:"POLICIA",taboo:["ley","detener","crimen","uniforme"]},
+      {word:"EJERCICIO",taboo:["deporte","gimnasio","correr","cuerpo"]},
+      {word:"RESTAURANTE",taboo:["comer","menu","camarero","comida"]},
+      {word:"ESPEJO",taboo:["reflejo","cristal","mirar","cara"]},
+      {word:"CALENDARIO",taboo:["fecha","mes","ano","horario"]},
+      {word:"MONTANA",taboo:["alto","escalar","nieve","naturaleza"]},
+      {word:"NATACION",taboo:["agua","piscina","deporte","flotar"]},
+      {word:"DICCIONARIO",taboo:["palabra","significado","idioma","libro"]},
+      {word:"CASTILLO",taboo:["rey","antiguo","piedra","torre"]},
+      {word:"VELA",taboo:["luz","fuego","cera","quemar"]},
+      {word:"PUENTE",taboo:["rio","cruzar","carretera","agua"]},
+      {word:"JARDIN",taboo:["planta","flor","exterior","crecer"]},
+      {word:"TRAFICO",taboo:["carretera","coche","atasco","ciudad"]},
+      {word:"CAMARA",taboo:["foto","imagen","disparar","lente"]},
+      {word:"SOBRE",taboo:["carta","correo","enviar","papel"]}
+    ],
+    B1:[
+      {word:"MEDIO AMBIENTE",taboo:["naturaleza","contaminacion","verde","tierra"]},
+      {word:"TRADICION",taboo:["cultura","costumbre","antigua","familia"]},
+      {word:"VOLUNTARIO",taboo:["ayuda","gratis","trabajar","caridad"]},
+      {word:"COMPETENCIA",taboo:["ganar","perder","deporte","concurso"]},
+      {word:"CONTAMINACION",taboo:["sucia","aire","medio ambiente","toxico"]},
+      {word:"OPINION",taboo:["pensar","ver","creer","idea"]},
+      {word:"EDUCACION",taboo:["escuela","aprender","estudiar","conocimiento"]},
+      {word:"DEMOCRACIA",taboo:["votar","gobierno","eleccion","pueblo"]},
+      {word:"IMAGINACION",taboo:["crear","pensar","sueno","mente"]},
+      {word:"AVENTURA",taboo:["viajar","emocionante","peligro","explorar"]},
+      {word:"PRESION",taboo:["estres","empujar","fuerza","peso"]},
+      {word:"LOGRO",taboo:["exito","meta","cumplir","orgullo"]},
+      {word:"DECEPCION",taboo:["triste","esperar","fallar","disgusto"]},
+      {word:"GENERACION",taboo:["edad","joven","viejo","familia"]},
+      {word:"INVESTIGACION",taboo:["estudiar","encontrar","ciencia","informacion"]},
+      {word:"RESPONSABLE",taboo:["deber","culpa","maduro","tarea"]},
+      {word:"PUBLICIDAD",taboo:["comprar","vender","comercial","producto"]},
+      {word:"DESEMPLEO",taboo:["trabajo","dinero","despedido","buscar"]},
+      {word:"CONFIANZA",taboo:["creer","fuerte","uno mismo","seguridad"]},
+      {word:"DISCUSION",taboo:["pelea","desacuerdo","hablar","razon"]},
+      {word:"PRESUPUESTO",taboo:["dinero","gastar","planear","costo"]},
+      {word:"RECOMENDAR",taboo:["sugerir","bueno","consejo","decir"]},
+      {word:"FLEXIBLE",taboo:["cambiar","doblar","adaptar","blando"]},
+      {word:"PREDECIR",taboo:["futuro","adivinar","prever","esperar"]},
+      {word:"INFLUENCIA",taboo:["afectar","poder","cambio","impacto"]},
+      {word:"NEGOCIAR",taboo:["hablar","acordar","trato","discutir"]},
+      {word:"AGOTADO",taboo:["cansado","dormir","energia","debil"]},
+      {word:"PERMISO",taboo:["permitir","preguntar","si","derecho"]},
+      {word:"EVIDENCIA",taboo:["prueba","demostrar","hecho","crimen"]},
+      {word:"VECINDARIO",taboo:["zona","vivir","comunidad","calle"]}
+    ],
+    B2:[
+      {word:"FENOMENO",taboo:["evento","extrano","ocurrir","observar"]},
+      {word:"CONSECUENCIA",taboo:["resultado","efecto","ocurrir","causa"]},
+      {word:"AMBIGUO",taboo:["poco claro","significado","dos","interpretar"]},
+      {word:"ESCEPTICO",taboo:["dudar","creer","confianza","cuestionar"]},
+      {word:"INNOVADOR",taboo:["nuevo","creativo","idea","tecnologia"]},
+      {word:"DETERIORAR",taboo:["empeorar","declive","malo","calidad"]},
+      {word:"PERSISTENTE",taboo:["seguir","continuar","parar","terco"]},
+      {word:"JERARQUIA",taboo:["rango","nivel","jefe","poder"]},
+      {word:"ESTEREOTIPO",taboo:["juzgar","grupo","pensar","asumir"]},
+      {word:"COMPROMISO",taboo:["acordar","mitad","ambos","ceder"]},
+      {word:"BUROCRACIA",taboo:["gobierno","reglas","papel","lento"]},
+      {word:"IMPULSO",taboo:["velocidad","fuerza","mover","crecer"]},
+      {word:"VERSATIL",taboo:["mucho","usar","flexible","habilidad"]},
+      {word:"EPIDEMIA",taboo:["enfermedad","extender","enfermo","muchos"]},
+      {word:"RETORICA",taboo:["discurso","lenguaje","persuadir","politica"]},
+      {word:"IMPLICACION",taboo:["significar","sugerir","resultado","oculto"]},
+      {word:"RESILIENCIA",taboo:["fuerte","recuperar","dificil","rebotar"]},
+      {word:"PARADOJA",taboo:["opuesto","verdad","falso","extrano"]},
+      {word:"PREJUICIO",taboo:["juzgar","injusto","grupo","antes"]},
+      {word:"SOSTENIBLE",taboo:["medio ambiente","largo","verde","futuro"]},
+      {word:"PRAGMATICO",taboo:["practico","real","trabajo","idea"]},
+      {word:"TRANSPARENTE",taboo:["claro","ver","honesto","cristal"]},
+      {word:"CONTROVERSIAL",taboo:["debate","desacuerdo","tema","opinion"]},
+      {word:"EXPLOTAR",taboo:["usar","injusto","ventaja","tomar"]},
+      {word:"COLABORAR",taboo:["trabajar","juntos","equipo","unirse"]},
+      {word:"FRAGIL",taboo:["romper","cuidado","debil","cristal"]},
+      {word:"INICIATIVA",taboo:["comenzar","idea","primero","accion"]},
+      {word:"DILEMA",taboo:["elegir","problema","dos","dificil"]},
+      {word:"INGRESOS",taboo:["dinero","ganar","negocio","renta"]},
+      {word:"PERCEPCION",taboo:["ver","pensar","entender","vista"]}
+    ]
+  },
+  FA: {
+    A1:[
+      {word:"گربه",taboo:["حیوان","میو","موی","خانگی"]},
+      {word:"سگ",taboo:["حیوان","پارس","استخوان","خانگی"]},
+      {word:"آب",taboo:["نوشیدن","مایع","خیس","رودخانه"]},
+      {word:"خانه",taboo:["زندگی","ساختمان","در","اتاق"]},
+      {word:"کتاب",taboo:["خواندن","صفحه","داستان","کتابخانه"]},
+      {word:"سیب",taboo:["میوه","قرمز","خوردن","درخت"]},
+      {word:"خورشید",taboo:["نور","گرم","آسمان","زرد"]},
+      {word:"ماشین",taboo:["راندن","جاده","چرخ","موتور"]},
+      {word:"خوشحال",taboo:["لبخند","خوب","شادی","احساس"]},
+      {word:"بزرگ",taboo:["کوچک","اندازه","عظیم","غول"]},
+      {word:"بچه",taboo:["کوچک","کودک","گریه","تولد"]},
+      {word:"شیر",taboo:["نوشیدن","سفید","گاو","لیوان"]},
+      {word:"درخت",taboo:["سبز","گیاه","چوب","برگ"]},
+      {word:"چشم",taboo:["دیدن","صورت","نگاه","بینایی"]},
+      {word:"دست",taboo:["انگشت","لمس","بازو","پنج"]},
+      {word:"صندلی",taboo:["نشستن","میز","مبل","پایه"]},
+      {word:"ماهی",taboo:["دریا","شنا","آب","غذا"]},
+      {word:"سرد",taboo:["گرم","دما","زمستان","یخ"]},
+      {word:"توپ",taboo:["گرد","بازی","ورزش","پرتاب"]},
+      {word:"مدرسه",taboo:["یاد","کلاس","معلم","دانش"]},
+      {word:"تخت",taboo:["خواب","اتاق","بالش","شب"]},
+      {word:"نان",taboo:["خوردن","گندم","تست","پختن"]},
+      {word:"در",taboo:["باز","بستن","اتاق","ورود"]},
+      {word:"پرنده",taboo:["پرواز","بال","آسمان","حیوان"]},
+      {word:"کفش",taboo:["پا","پوشیدن","جوراب","راه"]},
+      {word:"باران",taboo:["خیس","ابر","آب","آسمان"]},
+      {word:"بینی",taboo:["بوییدن","صورت","نفس","عطسه"]},
+      {word:"تخم مرغ",taboo:["مرغ","صبحانه","سفید","پختن"]},
+      {word:"آتش",taboo:["گرم","سوختن","شعله","دود"]},
+      {word:"برف",taboo:["سرد","سفید","زمستان","بارش"]}
+    ],
+    A2:[
+      {word:"آشپزخانه",taboo:["پختن","غذا","اتاق","اجاق"]},
+      {word:"تولد",taboo:["کیک","مهمانی","سن","جشن"]},
+      {word:"بیمارستان",taboo:["دکتر","بیمار","ساختمان","پرستار"]},
+      {word:"خرید",taboo:["خریدن","فروشگاه","پول","مرکز"]},
+      {word:"گرسنه",taboo:["خوردن","غذا","معده","خالی"]},
+      {word:"بلیط",taboo:["قطار","سینما","سفر","پرداخت"]},
+      {word:"هوا",taboo:["باران","خورشید","گرم","سرد"]},
+      {word:"صبحانه",taboo:["صبح","خوردن","تخم","قهوه"]},
+      {word:"تلفن",taboo:["زنگ","صحبت","موبایل","زنگ"]},
+      {word:"چتر",taboo:["باران","خیس","حمل","باز"]},
+      {word:"تعطیلات",taboo:["سفر","استراحت","ساحل","تابستان"]},
+      {word:"کتابخانه",taboo:["کتاب","خواندن","ساکت","امانت"]},
+      {word:"فرودگاه",taboo:["هواپیما","پرواز","سفر","بلیط"]},
+      {word:"کت",taboo:["پوشیدن","گرم","لباس","گیره"]},
+      {word:"بازار",taboo:["خرید","فروش","غذا","مغازه"]},
+      {word:"پلیس",taboo:["قانون","دستگیری","جرم","یونیفرم"]},
+      {word:"ورزش",taboo:["باشگاه","دویدن","بدن","ورزش"]},
+      {word:"رستوران",taboo:["خوردن","منو","گارسون","غذا"]},
+      {word:"آینه",taboo:["بازتاب","شیشه","نگاه","صورت"]},
+      {word:"تقویم",taboo:["تاریخ","ماه","سال","برنامه"]},
+      {word:"کوه",taboo:["بلند","کوه‌نوردی","برف","طبیعت"]},
+      {word:"شنا",taboo:["آب","استخر","ورزش","شناور"]},
+      {word:"دیکشنری",taboo:["کلمه","معنی","زبان","کتاب"]},
+      {word:"قلعه",taboo:["پادشاه","قدیمی","سنگ","برج"]},
+      {word:"شمع",taboo:["نور","آتش","موم","سوختن"]},
+      {word:"پل",taboo:["رودخانه","عبور","جاده","آب"]},
+      {word:"باغ",taboo:["گیاه","گل","بیرون","رشد"]},
+      {word:"ترافیک",taboo:["جاده","ماشین","گیر","شهر"]},
+      {word:"دوربین",taboo:["عکس","تصویر","عکاسی","لنز"]},
+      {word:"پاکت",taboo:["نامه","پست","فرستادن","کاغذ"]}
+    ],
+    B1:[
+      {word:"محیط زیست",taboo:["طبیعت","آلودگی","سبز","زمین"]},
+      {word:"سنت",taboo:["فرهنگ","رسم","قدیم","خانواده"]},
+      {word:"داوطلب",taboo:["کمک","رایگان","کار","خیریه"]},
+      {word:"رقابت",taboo:["برنده","بازنده","ورزش","مسابقه"]},
+      {word:"آلودگی",taboo:["کثیف","هوا","محیط","سمی"]},
+      {word:"نظر",taboo:["فکر","دیدگاه","باور","ایده"]},
+      {word:"آموزش",taboo:["مدرسه","یاد","دانش","معلم"]},
+      {word:"دموکراسی",taboo:["رای","دولت","انتخاب","مردم"]},
+      {word:"تخیل",taboo:["خلاق","فکر","رویا","ذهن"]},
+      {word:"ماجراجویی",taboo:["سفر","هیجان","خطر","کشف"]},
+      {word:"فشار",taboo:["استرس","هل","نیرو","وزن"]},
+      {word:"موفقیت",taboo:["برنده","هدف","افتخار","انجام"]},
+      {word:"ناامیدی",taboo:["غمگین","انتظار","شکست","ناراحت"]},
+      {word:"نسل",taboo:["سن","جوان","پیر","خانواده"]},
+      {word:"تحقیق",taboo:["مطالعه","یافتن","علم","اطلاعات"]},
+      {word:"مسئولیت",taboo:["وظیفه","سرزنش","بالغ","کار"]},
+      {word:"تبلیغات",taboo:["خرید","فروش","محصول","تجاری"]},
+      {word:"بیکاری",taboo:["کار","پول","اخراج","جستجو"]},
+      {word:"اعتماد",taboo:["باور","قوی","خود","امنیت"]},
+      {word:"بحث",taboo:["دعوا","اختلاف","صحبت","دلیل"]},
+      {word:"بودجه",taboo:["پول","خرج","برنامه","هزینه"]},
+      {word:"پیشنهاد",taboo:["مشورت","خوب","توصیه","گفتن"]},
+      {word:"منعطف",taboo:["تغییر","خم","سازگاری","نرم"]},
+      {word:"پیش‌بینی",taboo:["آینده","حدس","برآورد","انتظار"]},
+      {word:"تاثیر",taboo:["تغییر","قدرت","نتیجه","اثر"]},
+      {word:"مذاکره",taboo:["صحبت","توافق","معامله","بحث"]},
+      {word:"خسته",taboo:["خواب","انرژی","ضعیف","بی‌رمق"]},
+      {word:"اجازه",taboo:["دادن","پرسیدن","بله","حق"]},
+      {word:"شواهد",taboo:["اثبات","نشان","واقعیت","جرم"]},
+      {word:"محله",taboo:["منطقه","زندگی","جامعه","خیابان"]}
+    ],
+    B2:[
+      {word:"پدیده",taboo:["رویداد","عجیب","رخ دادن","مشاهده"]},
+      {word:"پیامد",taboo:["نتیجه","اثر","رخ دادن","علت"]},
+      {word:"مبهم",taboo:["نامشخص","معنی","دو","تفسیر"]},
+      {word:"شکاک",taboo:["تردید","باور","اعتماد","سوال"]},
+      {word:"نوآور",taboo:["جدید","خلاق","ایده","فناوری"]},
+      {word:"تنزل",taboo:["بدتر","افت","کیفیت","خراب"]},
+      {word:"پایدار",taboo:["ادامه","توقف","سرسخت","مداوم"]},
+      {word:"سلسله مراتب",taboo:["رتبه","سطح","رئیس","قدرت"]},
+      {word:"کلیشه",taboo:["قضاوت","گروه","فکر","فرض"]},
+      {word:"مصالحه",taboo:["توافق","میانه","هر دو","دادن"]},
+      {word:"بروکراسی",taboo:["دولت","قوانین","کاغذ","کند"]},
+      {word:"شتاب",taboo:["سرعت","نیرو","حرکت","افزایش"]},
+      {word:"چندمنظوره",taboo:["بسیار","استفاده","منعطف","مهارت"]},
+      {word:"اپیدمی",taboo:["بیماری","گسترش","بیمار","بسیاری"]},
+      {word:"خطابه",taboo:["سخنرانی","زبان","متقاعد","سیاسی"]},
+      {word:"مضمون",taboo:["معنی","پیشنهاد","نتیجه","پنهان"]},
+      {word:"تاب‌آوری",taboo:["قوی","بازیابی","دشوار","برگشت"]},
+      {word:"پارادوکس",taboo:["مخالف","درست","غلط","عجیب"]},
+      {word:"تعصب",taboo:["قضاوت","ناعادلانه","گروه","قبل"]},
+      {word:"پایدار",taboo:["محیط","طولانی","سبز","آینده"]},
+      {word:"عملگرا",taboo:["عملی","واقعی","کار","ایده"]},
+      {word:"شفاف",taboo:["روشن","دیدن","صادق","شیشه"]},
+      {word:"بحث برانگیز",taboo:["مناظره","اختلاف","موضوع","نظر"]},
+      {word:"استثمار",taboo:["استفاده","ناعادلانه","مزیت","گرفتن"]},
+      {word:"همکاری",taboo:["کار","با هم","تیم","پیوستن"]},
+      {word:"شکننده",taboo:["شکستن","مراقبت","ضعیف","شیشه"]},
+      {word:"ابتکار",taboo:["شروع","ایده","اول","عمل"]},
+      {word:"معما",taboo:["انتخاب","مشکل","دو","سخت"]},
+      {word:"درآمد",taboo:["پول","کسب","تجارت","عایدی"]},
+      {word:"درک",taboo:["دیدن","فکر","فهمیدن","دیدگاه"]}
+    ]
+  },
+  KU: {
+    A1:[
+      {word:"PISIK",taboo:["ajal","miau","por","mal"]},
+      {word:"SEG",taboo:["ajal","gurdol","hestî","mal"]},
+      {word:"AV",taboo:["vexwe","şilav","şil","çem"]},
+      {word:"MAL",taboo:["jiyan","avahî","derî","ode"]},
+      {word:"PIRTÛK",taboo:["xwend","rûpel","çîrok","pirtûkxane"]},
+      {word:"SÊV",taboo:["fêkî","sor","xwarin","dar"]},
+      {word:"ROJ",taboo:["ronahî","germ","ezman","zer"]},
+      {word:"EREBE",taboo:["ajotin","rê","teker","motor"]},
+      {word:"BEXTEWAR",taboo:["ken","baş","şabûn","hest"]},
+      {word:"MEZIN",taboo:["biçûk","mezinahî","dêv","fireh"]},
+      {word:"PITIK",taboo:["biçûk","zarok","girî","ji dayik"]},
+      {word:"ŞÎRE",taboo:["vexwe","spî","çêl","kulîlk"]},
+      {word:"DAR",taboo:["kesk","nebat","dar","pelk"]},
+      {word:"ÇAVE",taboo:["dîtin","rû","mêze","bîn"]},
+      {word:"DEST",taboo:["tilî","dest","bazin","pênc"]},
+      {word:"KURSÎ",taboo:["rûniştin","mase","mobîlye","lingê"]},
+      {word:"MASÎ",taboo:["derya","avjenî","av","xwarin"]},
+      {word:"SARK",taboo:["germ","germahî","zivistan","qeşa"]},
+      {word:"TOP",taboo:["gird","lîstin","werzis","avêtin"]},
+      {word:"DIBISTAN",taboo:["hîn","sinif","mamoste","xwendekar"]},
+      {word:"NIVÎN",taboo:["xewtin","ode","xewle","şev"]},
+      {word:"NAN",taboo:["xwarin","genim","tost","hamur"]},
+      {word:"DERÎ",taboo:["vekirin","girtin","ode","derketin"]},
+      {word:"ÇIVÎK",taboo:["firîn","bask","ezman","ajal"]},
+      {word:"PÊLAV",taboo:["ling","lixwe kirin","corab","meşîn"]},
+      {word:"BARAN",taboo:["şil","ewir","av","ezman"]},
+      {word:"POZÎ",taboo:["bîhnkirin","rû","nefes","bişkurin"]},
+      {word:"HÊK",taboo:["mirîşk","taştê","spî","pijandîn"]},
+      {word:"AGIR",taboo:["germ","şewitîn","alêv","dûman"]},
+      {word:"BERF",taboo:["sark","spî","zivistan","baryîn"]}
+    ],
+    A2:[
+      {word:"XWARINXANE",taboo:["pijandin","xwarin","ode","ocax"]},
+      {word:"ROJBÛN",taboo:["kek","merase","emer","pîrozkirin"]},
+      {word:"NEXWEŞXANE",taboo:["bijîşk","nexweş","avahî","hemşîre"]},
+      {word:"KIRÎN",taboo:["kirîn","dukkan","pere","bazaar"]},
+      {word:"BIRÇÎ",taboo:["xwarin","mide","vala","nexwar"]},
+      {word:"BILET",taboo:["trên","sîno","sefar","dayîn"]},
+      {word:"HEWA",taboo:["baran","roj","germ","sard"]},
+      {word:"TAŞTÊ",taboo:["sibe","xwarin","hêk","qehwe"]},
+      {word:"TELEFON",taboo:["bangdan","peyîvin","mobîl","lêdan"]},
+      {word:"SÊLAV",taboo:["baran","şil","hilgirtin","vekirin"]},
+      {word:"BETLANE",taboo:["geryan","rihet","plaj","havîn"]},
+      {word:"PIRTÛKXANE",taboo:["pirtûk","xwendin","bêdeng","deyn"]},
+      {word:"BALAFIRGEHA",taboo:["balafir","firîn","sefar","bilet"]},
+      {word:"KET",taboo:["lixwe kirin","kaban","germ","cil"]},
+      {word:"BAZAR",taboo:["kirîn","firotin","xwarin","dukkan"]},
+      {word:"POLÎS",taboo:["qanûn","girtîkirin","sûc","uniforme"]},
+      {word:"WERZIS",taboo:["sport","bezîn","beden","gym"]},
+      {word:"XWARINGEH",taboo:["xwarin","menu","garson","xwarin"]},
+      {word:"NEYNIK",taboo:["vegerandin","cam","mêze","rû"]},
+      {word:"SALNAME",taboo:["tarîx","meh","sal","plan"]},
+      {word:"ÇIYA",taboo:["bilind","hilkişîn","berf","xweza"]},
+      {word:"MELEVANÎ",taboo:["av","hewz","werzis","helandin"]},
+      {word:"FERHENG",taboo:["peyvek","wate","ziman","pirtûk"]},
+      {word:"KELA",taboo:["padîşah","kevn","kevir","birç"]},
+      {word:"MÛME",taboo:["ronahî","agir","mum","şewitîn"]},
+      {word:"PIR",taboo:["çem","derbazkirin","rê","av"]},
+      {word:"BAX",taboo:["nebat","gul","derve","rûdan"]},
+      {word:"SEYRÛSEFER",taboo:["rê","erebe","gir","bajar"]},
+      {word:"KAMERA",taboo:["wêne","xêz","kişandin","lens"]},
+      {word:"ZARF",taboo:["name","post","şandin","kaxez"]}
+    ],
+    B1:[
+      {word:"HAWIRDOR",taboo:["xweza","qirêjî","kesk","erd"]},
+      {word:"ADET",taboo:["kultur","kevn","malbat","rasm"]},
+      {word:"XWILAM",taboo:["alîkarî","bêpereyî","xebat","xêrxwaz"]},
+      {word:"PÊŞBAZÎ",taboo:["brîn","têkçûn","werzis","musabeke"]},
+      {word:"QIRÊJÎ",taboo:["pîs","hewa","hawirdor","jehr"]},
+      {word:"FIKIR",taboo:["ramandin","nêrîn","bawer","îdeya"]},
+      {word:"PERWERDE",taboo:["dibistan","hîn","zanist","mamoste"]},
+      {word:"DEMOKRASÎ",taboo:["dengdan","hukumet","hilbijartin","gel"]},
+      {word:"XEYALPERESTÎ",taboo:["afirîner","ramandin","xewn","mêjî"]},
+      {word:"SERPÊHATÎ",taboo:["geşt","heyecan","xeter","keşifkirin"]},
+      {word:"ZEXTÊ",taboo:["stres","iterandin","hêz","giran"]},
+      {word:"SERKEFTIN",taboo:["brîn","armanc","serbilindî","bicihanîn"]},
+      {word:"XEMGÎNÎ",taboo:["xemgîn","hêvî","têkçûn","xembar"]},
+      {word:"NESIL",taboo:["emer","ciwan","kal","malbat"]},
+      {word:"LÊKOLÎN",taboo:["xwendin","dîtin","zanist","agahî"]},
+      {word:"BERPIRSIYARÎ",taboo:["wezîfe","sûcdarkirin","gihîştî","kar"]},
+      {word:"REKLAM",taboo:["kirîn","firotin","hilber","ticarî"]},
+      {word:"BÊKARÎ",taboo:["kar","pere","avêtin","lêgerîn"]},
+      {word:"BAWERÎ",taboo:["bawer","hêzdar","xwe","ewlekarî"]},
+      {word:"NAKOKÎ",taboo:["pevçûn","anûaneyî","axaftin","sedem"]},
+      {word:"BUTCE",taboo:["pere","xerckirin","plan","maliyet"]},
+      {word:"PÊŞNIYAR",taboo:["pêşniyar","baş","şîret","gotin"]},
+      {word:"NERMBÛN",taboo:["guherîn","kulêştin","adaptekirin","nerm"]},
+      {word:"PÊŞBÎNÎ",taboo:["pêşeroj","texmîn","pêşbendar","hêvî"]},
+      {word:"TESÎR",taboo:["guherîn","hêz","encam","bandor"]},
+      {word:"MUZAKERE",taboo:["axaftin","anûaneyî","peyman","nîqaş"]},
+      {word:"WESTÎYAYÎ",taboo:["xewtin","enerji","lawaz","têkçûyî"]},
+      {word:"DESTÛR",taboo:["dayîn","pirsîn","erê","maf"]},
+      {word:"DELÎL",taboo:["îspat","nîşandan","rastî","sûc"]},
+      {word:"TAXE",taboo:["herêm","jiyan","civak","kolanê"]}
+    ],
+    B2:[
+      {word:"FENOMEN",taboo:["bûyer","ecêb","derketin","çavderî"]},
+      {word:"ENCAM",taboo:["derencam","tesîr","derketin","sedem"]},
+      {word:"NEDIYAR",taboo:["nezelal","wate","du","şîrovekirin"]},
+      {word:"GUMANKÊŞ",taboo:["guman","bawer","bawerî","pirsîn"]},
+      {word:"NÛJEN",taboo:["nû","afirîner","fikir","teknolojî"]},
+      {word:"XIRABÛN",taboo:["xirabtir","daketîn","kalîte","xera"]},
+      {word:"ISRAR",taboo:["berdewam","sekinîn","leng","domandîn"]},
+      {word:"HIYERARŞÎ",taboo:["rêz","ast","serok","hêz"]},
+      {word:"QALIB",taboo:["dadmendî","kom","ramandin","texmîn"]},
+      {word:"LIHEVKIRIN",taboo:["lihevkirin","nîv","her du","dayîn"]},
+      {word:"BUROKRASÎ",taboo:["hukumet","rêzikname","kaxez","hêdî"]},
+      {word:"LEZKIRIN",taboo:["lezet","hêz","livîn","mezinbûn"]},
+      {word:"PIRALÎ",taboo:["gelek","bikarhanîn","nerm","jêhatî"]},
+      {word:"EPÎDEMÎ",taboo:["nexweşî","belav","nexweş","gelek"]},
+      {word:"XITABE",taboo:["gotûbêj","ziman","razandîn","siyasî"]},
+      {word:"WATE",taboo:["mane","pêşniyar","encam","veşartî"]},
+      {word:"BERXWEDÊRÎ",taboo:["hêzdar","vegirtin","zor","vegerîn"]},
+      {word:"PARADOKS",taboo:["berevajî","rast","xelet","ecêb"]},
+      {word:"PÊŞDARAZ",taboo:["dadmendî","neadil","kom","berê"]},
+      {word:"DOMDAR",taboo:["hawirdor","dirêj","kesk","pêşeroj"]},
+      {word:"PRAGMATÎK",taboo:["pratîkî","rastî","kar","fikir"]},
+      {word:"ZELAL",taboo:["aşkera","dîtin","dilsoz","cam"]},
+      {word:"NAKOKDAR",taboo:["nîqaş","anûaneyî","mijar","nêrîn"]},
+      {word:"ÎSTISMAR",taboo:["bikarhanîn","neadil","avantaj","girtin"]},
+      {word:"HEVKARÎ",taboo:["xebat","bi hev re","tîm","tevlîbûn"]},
+      {word:"ŞIKESTBAR",taboo:["şikandin","baldarî","lawaz","cam"]},
+      {word:"DESTPÊK",taboo:["destpêkirin","fikir","yekem","çalakî"]},
+      {word:"DILEME",taboo:["hilbijartin","pirsgirêk","du","zor"]},
+      {word:"DAHATIN",taboo:["pere","qezanc","karsazî","hatina"]},
+      {word:"TÊGIHIŞTIN",taboo:["dîtin","ramandin","fêhm","nêrîn"]}
+    ]
+  }
+};
+
+/* language metadata */
+var LANG_META = {
+  EN: { name: "Ingilizce", flag: "&#127468;&#127463;" },
+  TR: { name: "Turkce",    flag: "&#127481;&#127479;" },
+  ES: { name: "Ispanyolca",flag: "&#127466;&#127480;" },
+  FA: { name: "Farsa",     flag: "&#127470;&#127479;" },
+  KU: { name: "Kurtce",    flag: "&#127988;" }
+};
+
+/* ========== STATE ========== */
+var selectedLang  = null;
+var selectedLevel = null;
+var timeLimit     = 90;
+var timerInterval = null;
+var timeLeft      = 90;
+var score=0, passesLeft=3, correctCount=0, passCount=0, tabooCount=0;
+var deck=[], deckIdx=0, isPaused=false;
+var timeMap = {1:30,2:60,3:90,4:120,5:150};
+
+/* ========== LANG MODAL ========== */
+function openLangModal() {
+  document.getElementById('lang-overlay').classList.add('show');
+}
+function closeLangModal() {
+  document.getElementById('lang-overlay').classList.remove('show');
+}
+function closeLangModalOutside(e) {
+  if (e.target === document.getElementById('lang-overlay')) closeLangModal();
+}
+function selectLang(code) {
+  selectedLang = code;
+  var meta = LANG_META[code];
+  document.getElementById('lang-flag').innerHTML = meta.flag;
+  document.getElementById('lang-name').textContent = meta.name;
+  document.getElementById('lang-select-btn').classList.add('selected');
+  document.querySelectorAll('.lang-item').forEach(function(b){ b.classList.remove('selected'); });
+  document.querySelector('[data-lang="'+code+'"]').classList.add('selected');
+  closeLangModal();
+  checkStartBtn();
+}
+
+/* ========== SETUP ========== */
+function selectLevel(lvl) {
+  selectedLevel = lvl;
+  document.querySelectorAll('.level-btn').forEach(function(b){ b.classList.remove('selected'); });
+  document.querySelector('[data-level="'+lvl+'"]').classList.add('selected');
+  checkStartBtn();
+}
+function checkStartBtn() {
+  document.getElementById('start-btn').disabled = !(selectedLang && selectedLevel);
+}
+function updateTime(val) {
+  timeLimit = timeMap[val];
+  document.getElementById('time-display').textContent = timeLimit + 's';
+}
+
+/* ========== GAME ========== */
+function shuffle(arr) {
+  for(var i=arr.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=arr[i];arr[i]=arr[j];arr[j]=t;}
+  return arr;
+}
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active');});
+  document.getElementById(id).classList.add('active');
+}
+function renderCard() {
+  if(deckIdx>=deck.length){deckIdx=0;shuffle(deck);}
+  var card=deck[deckIdx++];
+  document.getElementById('card-word').textContent=card.word;
+  document.getElementById('card-taboo').innerHTML=card.taboo.map(function(t){return'<li>'+t+'</li>';}).join('');
+  setButtons(true);
+}
+function setButtons(on) {
+  document.getElementById('btn-correct').disabled=!on;
+  document.getElementById('btn-pass').disabled=!on||passesLeft<=0;
+  document.getElementById('btn-taboo').disabled=!on;
+}
+function markCorrect(){score++;correctCount++;document.getElementById('score-display').textContent=score;renderCard();}
+function markPass(){
+  if(passesLeft<=0)return;
+  passesLeft--;passCount++;
+  document.getElementById('pass-display').textContent=passesLeft;
+  document.getElementById('pass-info').textContent=passesLeft===0?'Pas hakkin kalmadi':passesLeft+' pas hakkin var';
+  if(passesLeft===0)document.getElementById('btn-pass').disabled=true;
+  renderCard();
+}
+function markTaboo(){score=Math.max(0,score-1);tabooCount++;document.getElementById('score-display').textContent=score;renderCard();}
+function pauseGame(){
+  if(isPaused)return;isPaused=true;clearInterval(timerInterval);setButtons(false);
+  document.getElementById('pause-overlay').classList.add('show');
+}
+function resumeGame(){
+  isPaused=false;document.getElementById('pause-overlay').classList.remove('show');
+  setButtons(true);if(passesLeft===0)document.getElementById('btn-pass').disabled=true;
+  timerInterval=setInterval(function(){
+    timeLeft--;document.getElementById('timer-display').textContent=timeLeft;
+    if(timeLeft<=10)document.getElementById('timer-box').classList.add('urgent');
+    if(timeLeft<=0){clearInterval(timerInterval);endGame();}
+  },1000);
+}
+function quitGame(){
+  isPaused=false;document.getElementById('pause-overlay').classList.remove('show');
+  clearInterval(timerInterval);resetGame();
+}
+function startTimer(){
+  timeLeft=timeLimit;document.getElementById('timer-display').textContent=timeLeft;
+  document.getElementById('timer-box').classList.remove('urgent');
+  timerInterval=setInterval(function(){
+    timeLeft--;document.getElementById('timer-display').textContent=timeLeft;
+    if(timeLeft<=10)document.getElementById('timer-box').classList.add('urgent');
+    if(timeLeft<=0){clearInterval(timerInterval);endGame();}
+  },1000);
+}
+function startGame(){
+  score=0;passesLeft=3;correctCount=0;passCount=0;tabooCount=0;deckIdx=0;isPaused=false;
+  deck=shuffle(WORDS[selectedLang][selectedLevel].slice());
+  document.getElementById('score-display').textContent='0';
+  document.getElementById('pass-display').textContent='3';
+  document.getElementById('pass-info').textContent='3 pas hakkin var';
+  showScreen('screen-game');startTimer();renderCard();
+}
+function endGame(){
+  setButtons(false);
+  document.getElementById('final-score').textContent=score;
+  document.getElementById('stat-correct').textContent=correctCount;
+  document.getElementById('stat-pass').textContent=passCount;
+  document.getElementById('stat-taboo').textContent=tabooCount;
+  showScreen('screen-result');
+}
+function resetGame(){clearInterval(timerInterval);showScreen('screen-setup');}
+</script>
+</body>
+</html>

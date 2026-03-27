@@ -1,4 +1,4 @@
-const CACHE = 'taboo-v2';
+const CACHE = 'taboo-v3';
 const FILES = ['/', '/index.html', '/manifest.json'];
 
 self.addEventListener('install', function(e) {
